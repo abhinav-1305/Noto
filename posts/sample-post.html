@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Circles Can Recreate Any Sound Wave (Literally) 🎧🌀 - noto</title>
+    <link rel="stylesheet" href="../css/style.css">
+    
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="../index.html">index</a>
+                <a href="../about.html">about</a>
+                <a href="#">twitter</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <article class="post-content">
+                <h1>How Circles Can Recreate Any Sound Wave (Literally) 🎧🌀</h1>
+                <p class="post-meta">Published on 18.06.2025</p>
+
+                <p>Ever wonder how a computer can store something as rich and complex as a song? Or how a JPEG file squishes a huge photo into a tiny package? The answer, surprisingly, has a lot to do with circles. Lots and lots of spinning circles.</p>
+
+                <p>This is the magic of the Fourier Series. It's a wild idea from math that says you can break down *any* repeating signal—like a sound wave or a line drawing—into a combination of simple sine and cosine waves. And since sine waves are just... well, circles, it means we can represent incredibly complex things just by adding up a bunch of simple spinning circles.</p>
+                
+                <p>It's cool because it turns the messy, chaotic real world into a neat, orderly set of numbers that a computer can easily understand and reconstruct. It's the ultimate "divide and conquer" strategy, and it's the backbone of modern digital life.</p>
+
+                <p>Below is a little visual experiment. I've given it a simple shape (a square wave), and it's using a bunch of spinning circles (epicycles) to draw it. Watch how the combined motion of all the simple circles creates the complex shape. It's mesmerizing.</p>
+
+                <div id="p5-canvas-container"></div>
+            </article>
+        </div>
+    </main>
+
+    <script>
+        let time = 0;
+        let path = [];
+        let fourierX;
+
+        function dft(x) {
+            const X = [];
+            const N = x.length;
+            for (let k = 0; k < N; k++) {
+                let re = 0;
+                let im = 0;
+                for (let n = 0; n < N; n++) {
+                    const phi = (p5.prototype.TWO_PI * k * n) / N;
+                    re += x[n] * p5.prototype.cos(phi);
+                    im -= x[n] * p5.prototype.sin(phi);
+                }
+                re = re / N;
+                im = im / N;
+
+                let freq = k;
+                let amp = p5.prototype.sqrt(re * re + im * im);
+                let phase = p5.prototype.atan2(im, re);
+                X[k] = { re, im, freq, amp, phase };
+            }
+            return X;
+        }
+
+        let sketch = function(p) {
+            p.setup = function() {
+                let canvas = p.createCanvas(600, 400);
+                canvas.parent('p5-canvas-container');
+                const x = [];
+                for (let i = 0; i < 100; i++) {
+                    x.push(i < 50 ? 100 : -100);
+                }
+                fourierX = dft(x);
+                fourierX.sort((a, b) => b.amp - a.amp);
+            };
+
+            function epicycles(x, y, rotation, fourier) {
+                for (let i = 0; i < fourier.length; i++) {
+                    let prevx = x;
+                    let prevy = y;
+                    let freq = fourier[i].freq;
+                    let radius = fourier[i].amp;
+                    let phase = fourier[i].phase;
+                    x += radius * p.cos(freq * time + phase + rotation);
+                    y += radius * p.sin(freq * time + phase + rotation);
+
+                    p.stroke(255, 100);
+                    p.noFill();
+                    p.ellipse(prevx, prevy, radius * 2);
+                    p.stroke(255);
+                    p.line(prevx, prevy, x, y);
+                }
+                return p.createVector(x, y);
+            }
+
+            p.draw = function() {
+                p.background(0);
+                let v = epicycles(p.width / 2 - 150, p.height / 2, 0, fourierX);
+                path.unshift(v.y);
+                
+                p.translate(200, 0);
+                p.line(v.x - 200, v.y, 0, path[0]);
+                p.beginShape();
+                p.noFill();
+                p.stroke(255, 200, 0);
+                for (let i = 0; i < path.length; i++) {
+                    p.vertex(i, path[i]);
+                }
+                p.endShape();
+
+                const dt = p.TWO_PI / fourierX.length;
+                time += dt;
+
+                if (path.length > 500) {
+                    path.pop();
+                }
+            };
+        };
+        new p5(sketch);
+    </script>
+</body>
+</html> 

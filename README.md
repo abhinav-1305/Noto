@@ -1,0 +1,1 @@
+A minimal blog using HTML, CSS, JS, MathJax, highlight.js, and p5.js. 
